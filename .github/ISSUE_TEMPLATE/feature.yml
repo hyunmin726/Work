@@ -1,0 +1,110 @@
+name: Feature
+description: 새로운 기능이나 사용자 경험 개선을 제안합니다.
+title: "[Feature] "
+labels:
+  - "type: feature"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        구현 방법보다 해결하려는 문제와 기대하는 사용자 가치를 먼저 작성해 주세요.
+
+  - type: input
+    id: summary
+    attributes:
+      label: 기능 요약
+      description: 기능의 목적을 한 문장으로 작성해 주세요.
+      placeholder: 예) 사용자가 주간 DORA 지표를 한 화면에서 확인할 수 있도록 한다
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      options:
+        - P0 - 즉시 대응
+        - P1 - 높음
+        - P2 - 보통
+        - P3 - 낮음
+      default: 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 해결하려는 문제
+      description: 현재 사용자가 겪는 불편이나 비즈니스 문제를 작성해 주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: 사용자 스토리
+      description: "누가, 무엇을, 왜 원하는지 작성해 주세요."
+      placeholder: "나는 [사용자]로서 [행동]을 할 수 있어야 한다. 그래야 [가치]를 얻는다."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 범위
+      description: 이번 작업에 포함할 것과 포함하지 않을 것을 구분해 주세요.
+      placeholder: |
+        포함:
+        - 
+
+        제외:
+        - 
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 수용 기준
+      description: 완료 여부를 검증할 수 있는 Given/When/Then 또는 체크리스트를 작성해 주세요.
+      placeholder: |
+        - [ ] Given ...
+        - [ ] When ...
+        - [ ] Then ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: design
+    attributes:
+      label: 디자인 및 기술 참고
+      description: 화면 시안, API 계약, 관련 문서, 선행 작업, 기술 제약을 링크해 주세요.
+
+  - type: textarea
+    id: rollout
+    attributes:
+      label: 릴리스 및 측정 계획
+      description: 마이그레이션, feature flag, 문서화, 성공 지표나 모니터링 계획을 작성해 주세요.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 등록 전 확인
+      options:
+        - label: 중복 기능 요청을 검색했습니다.
+          required: true
+        - label: 문제와 사용자 가치를 설명했습니다.
+          required: true
+        - label: 수용 기준을 테스트 가능한 형태로 작성했습니다.
+          required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: 작업 분해 초안
+      description: GitHub Projects에서 추적할 하위 작업을 체크리스트로 작성해 주세요.
+      placeholder: |
+        - [ ] 설계
+        - [ ] 구현
+        - [ ] 테스트
+        - [ ] 문서화
