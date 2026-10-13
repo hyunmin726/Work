@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DORA Metrics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4"></script>
+  <style>
+    :root { color-scheme: dark; --bg: #0f172a; --card: #1e293b; --muted: #94a3b8; }
+    body { margin: 0; padding: 32px; font-family: system-ui, sans-serif; background: var(--bg); color: #e2e8f0; }
+    .wrap { max-width: 1100px; margin: auto; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .card, .chart { background: var(--card); border-radius: 14px; padding: 20px; }
+    .label { color: var(--muted); font-size: .9rem; } .value { font-size: 2rem; font-weight: 700; margin-top: 8px; }
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    canvas { max-height: 300px; }
+    @media (max-width: 760px) { .cards, .charts { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>DORA Metrics</h1>
+    <p id="period" class="label"></p>
+    <section class="cards" id="cards"></section>
+    <section class="charts">
+      <div class="chart"><canvas id="trend"></canvas></div>
+      <div class="chart"><canvas id="outcomes"></canvas></div>
+    </section>
+  </main>
+  <script>
+    // Replace this demo object with the contents of dora-metrics.json from the workflow artifact.
+    const data = {
+      window: { start: "2026-10-06", end: "2026-10-13" },
+      metrics: { lead_time_hours: 18.4, deployment_frequency_per_week: 9, mttr_hours: 3.2, change_failure_rate_percent: 11.1 },
+      sample_counts: { successful_deployments: 9, failed_deployments: 1 }
+    };
+    const cards = [
+      ["Lead Time", `${data.metrics.lead_time_hours} h`, "median merged PR → production"],
+      ["Deployment Frequency", `${data.metrics.deployment_frequency_per_week} / week`, "successful deployments"],
+      ["MTTR", `${data.metrics.mttr_hours} h`, "median recovery time"],
+      ["Change Failure Rate", `${data.metrics.change_failure_rate_percent}%`, "failed / terminal deployments"]
+    ];
+    document.querySelector("#period").textContent = `Measurement window: ${data.window.start} – ${data.window.end}`;
+    document.querySelector("#cards").innerHTML = cards.map(([name, value, detail]) =>
+      `<article class="card"><div class="label">${name}</div><div class="value">${value}</div><div class="label">${detail}</div></article>`
+    ).join("");
+    new Chart(document.querySelector("#trend"), {
+      type: "bar",
+      data: { labels: ["Lead Time", "MTTR"], datasets: [{ label: "Hours", data: [data.metrics.lead_time_hours, data.metrics.mttr_hours], backgroundColor: ["#38bdf8", "#a78bfa"] }] },
+      options: { plugins: { title: { display: true, text: "Flow and recovery (hours)", color: "#e2e8f0" }, legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+    new Chart(document.querySelector("#outcomes"), {
+      type: "doughnut",
+      data: { labels: ["Successful", "Failed"], datasets: [{ data: [data.sample_counts.successful_deployments, data.sample_counts.failed_deployments], backgroundColor: ["#34d399", "#fb7185"] }] },
+      options: { plugins: { title: { display: true, text: "Deployment outcomes", color: "#e2e8f0" } } }
+    });
+  </script>
+</body>
+</html>
