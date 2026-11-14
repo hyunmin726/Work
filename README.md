@@ -25,6 +25,13 @@ Chart.js로 만든 정적 대시보드는 [`docs/dora-dashboard.html`](docs/dora
 중앙값을 사용하며, Change Failure Rate는 실패·오류·취소된 배포를 모든 종료 배포로 나눈
 값입니다.
 
+## 학습 습관 분석
+
+[`docs/learning-analysis.html`](docs/learning-analysis.html)은 학습 기록의 `localStorage`
+데이터를 바탕으로 요일별 학습 빈도, 총·평균 학습 시간, 완료율, 자주 학습한 주제와
+간단한 학습 패턴을 분석합니다. 학습 기록 관리 페이지에서 기록을 추가한 뒤 분석 페이지를
+새로고침하면 최신 결과를 확인할 수 있습니다.
+
 ## GitHub Projects 계획·추적
 
 이슈 생성 시 다음 Issue Form을 사용하면 계획에 필요한 정보와 완료 조건을 일정한 형식으로
