@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>성적 예측 모델</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-raised: #273449;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #fb7185;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 1080px; margin: auto; }
+    h1 { margin: 0; font-size: 2rem; }
+    h2 { margin: 0 0 16px; font-size: 1.15rem; }
+    .subtitle { margin: 8px 0 28px; color: var(--muted); }
+    .panel, .result {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .panel + .panel, .result { margin-top: 20px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 620px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-size: .85rem; font-weight: 500; }
+    td input { width: 100%; }
+    input, select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+      font: inherit;
+      color: var(--text);
+      background: var(--bg);
+    }
+    input:focus, select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+    .weight { width: 110px; }
+    .score { width: 130px; }
+    .actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      color: #082f49;
+      background: var(--primary);
+      cursor: pointer;
+    }
+    button.secondary { color: var(--text); background: var(--surface-raised); }
+    button.danger { padding: 7px 10px; color: #4c0519; background: var(--danger); }
+    button:hover { filter: brightness(1.08); }
+    .message { min-height: 20px; margin: 14px 0 0; color: var(--warning); }
+    .results {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .metric {
+      padding: 16px;
+      border-radius: 10px;
+      background: var(--surface-raised);
+    }
+    .metric-label { color: var(--muted); font-size: .85rem; }
+    .metric-value { margin-top: 7px; font-size: 1.5rem; font-weight: 700; }
+    .metric-value.highlight { color: var(--success); }
+    .explanation { margin: 18px 0 0; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 760px) {
+      body { padding: 24px 12px; }
+      .results { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .results { grid-template-columns: 1fr; }
+      .actions { align-items: stretch; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>성적 예측 모델</h1>
+    <p class="subtitle">평가 항목별 비중과 현재 점수로 최종 성적을 예측해 보세요.</p>
+
+    <section class="panel" aria-labelledby="assessment-title">
+      <h2 id="assessment-title">평가 항목</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">평가 항목</th>
+              <th scope="col">반영 비중 (%)</th>
+              <th scope="col">현재 점수 (0~100)</th>
+              <th scope="col"><span class="sr-only">항목 삭제</span></th>
+            </tr>
+          </thead>
+          <tbody id="assessment-rows"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button type="button" class="secondary" id="add-button">평가 항목 추가</button>
+        <button type="button" id="calculate-button">성적 예측</button>
+      </div>
+      <p class="message" id="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="target-title">
+      <h2 id="target-title">목표 등급</h2>
+      <label for="target-grade">달성하고 싶은 등급</label>
+      <select id="target-grade">
+        <option value="95">A+ (95점)</option>
+        <option value="90" selected>A0 (90점)</option>
+        <option value="85">B+ (85점)</option>
+        <option value="80">B0 (80점)</option>
+        <option value="75">C+ (75점)</option>
+        <option value="70">C0 (70점)</option>
+      </select>
+    </section>
+
+    <section class="result" aria-labelledby="result-title">
+      <h2 id="result-title">예측 결과</h2>
+      <div class="results">
+        <div class="metric">
+          <div class="metric-label">예상 최종 점수</div>
+          <div class="metric-value highlight" id="predicted-score">-</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">예상 등급</div>
+          <div class="metric-value" id="predicted-grade">-</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">남은 평가 비중</div>
+          <div class="metric-value" id="remaining-weight">-</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">목표 달성 필요 점수</div>
+          <div class="metric-value" id="required-score">-</div>
+        </div>
+      </div>
+      <p class="explanation" id="explanation">
+        현재 점수가 입력된 항목의 평균을 남은 항목에도 적용해 예상 점수를 계산합니다.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "grade-prediction-assessments";
+    const initialAssessments = [
+      { name: "중간고사", weight: 30, score: "" },
+      { name: "기말고사", weight: 40, score: "" },
+      { name: "과제", weight: 20, score: "" },
+      { name: "출석 및 참여", weight: 10, score: "" }
+    ];
+    const rowsElement = document.querySelector("#assessment-rows");
+    const messageElement = document.querySelector("#message");
+    let assessments = loadAssessments();
+
+    document.querySelector("#add-button").addEventListener("click", () => {
+      assessments.push({ name: "", weight: "", score: "" });
+      renderRows();
+    });
+    document.querySelector("#calculate-button").addEventListener("click", calculate);
+    document.querySelector("#target-grade").addEventListener("change", calculate);
+    renderRows();
+
+    function loadAssessments() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        return Array.isArray(saved) && saved.length ? saved : initialAssessments;
+      } catch {
+        return initialAssessments;
+      }
+    }
+
+    function renderRows() {
+      rowsElement.replaceChildren();
+      assessments.forEach((assessment, index) => {
+        const row = document.createElement("tr");
+        row.append(
+          createInputCell("name", assessment.name, "예: 중간고사", index),
+          createInputCell("weight", assessment.weight, "0~100", index, "number"),
+          createInputCell("score", assessment.score, "미입력 가능", index, "number")
+        );
+        const actionCell = document.createElement("td");
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "danger";
+        deleteButton.textContent = "삭제";
+        deleteButton.addEventListener("click", () => {
+          if (assessments.length === 1) return;
+          assessments.splice(index, 1);
+          renderRows();
+          calculate();
+        });
+        actionCell.append(deleteButton);
+        row.append(actionCell);
+        rowsElement.append(row);
+      });
+    }
+
+    function createInputCell(field, value, placeholder, index, type = "text") {
+      const cell = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = type;
+      input.className = field;
+      input.value = value;
+      input.placeholder = placeholder;
+      input.setAttribute("aria-label", `${index + 1}번째 ${fieldLabel(field)}`);
+      if (type === "number") {
+        input.min = "0";
+        input.max = "100";
+        input.step = "0.1";
+      }
+      input.addEventListener("input", () => {
+        assessments[index][field] = type === "number" ? input.value : input.value.trim();
+      });
+      cell.append(input);
+      return cell;
+    }
+
+    function calculate() {
+      const normalized = assessments.map((assessment) => ({
+        name: assessment.name.trim(),
+        weight: Number(assessment.weight),
+        score: assessment.score === "" ? null : Number(assessment.score)
+      }));
+      const invalid = normalized.some((assessment) =>
+        !assessment.name ||
+        !Number.isFinite(assessment.weight) ||
+        assessment.weight <= 0 ||
+        assessment.weight > 100 ||
+        (assessment.score !== null && (!Number.isFinite(assessment.score) || assessment.score < 0 || assessment.score > 100))
+      );
+      const totalWeight = normalized.reduce((sum, assessment) => sum + assessment.weight, 0);
+      if (invalid) {
+        showMessage("모든 항목의 이름과 비중을 입력하고 점수는 0~100 사이로 입력해 주세요.");
+        return;
+      }
+      if (Math.abs(totalWeight - 100) > 0.01) {
+        showMessage(`평가 비중의 합이 ${format(totalWeight)}%입니다. 총합을 100%로 맞춰 주세요.`);
+        return;
+      }
+
+      const graded = normalized.filter((assessment) => assessment.score !== null);
+      if (!graded.length) {
+        showMessage("예측하려면 현재 점수를 하나 이상 입력해 주세요.");
+        return;
+      }
+      const earned = graded.reduce((sum, assessment) => sum + assessment.score * assessment.weight / 100, 0);
+      const gradedWeight = graded.reduce((sum, assessment) => sum + assessment.weight, 0);
+      const remainingWeight = 100 - gradedWeight;
+      const currentAverage = earned / gradedWeight * 100;
+      const predictedScore = earned + currentAverage * remainingWeight / 100;
+      const target = Number(document.querySelector("#target-grade").value);
+      const requiredScore = remainingWeight
+        ? (target - earned) / remainingWeight * 100
+        : target - predictedScore;
+
+      document.querySelector("#predicted-score").textContent = `${format(predictedScore)}점`;
+      document.querySelector("#predicted-grade").textContent = getGrade(predictedScore);
+      document.querySelector("#remaining-weight").textContent = `${format(remainingWeight)}%`;
+      document.querySelector("#required-score").textContent = remainingWeight
+        ? requiredScore <= 0 ? "달성" : requiredScore > 100 ? "불가능" : `${format(requiredScore)}점`
+        : predictedScore >= target ? "달성" : "불가능";
+      document.querySelector("#explanation").textContent =
+        `현재 입력된 ${format(gradedWeight)}%의 평균 ${format(currentAverage)}점을 남은 ${format(remainingWeight)}%에도 적용한 결과입니다.`;
+      showMessage("");
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(assessments));
+    }
+
+    function getGrade(score) {
+      if (score >= 95) return "A+";
+      if (score >= 90) return "A0";
+      if (score >= 85) return "B+";
+      if (score >= 80) return "B0";
+      if (score >= 75) return "C+";
+      if (score >= 70) return "C0";
+      if (score >= 65) return "D+";
+      if (score >= 60) return "D0";
+      return "F";
+    }
+
+    function fieldLabel(field) {
+      return { name: "평가 항목", weight: "반영 비중", score: "현재 점수" }[field];
+    }
+
+    function format(value) {
+      return Number.isInteger(value) ? String(value) : value.toFixed(1);
+    }
+
+    function showMessage(message) {
+      messageElement.textContent = message;
+    }
+  </script>
+</body>
+</html>
