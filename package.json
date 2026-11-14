@@ -1,0 +1,13 @@
+{
+  "name": "work",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Git and learning management practice project",
+  "scripts": {
+    "lint": "node --check scripts/dora-metrics.js && node --check scripts/static-pages.test.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

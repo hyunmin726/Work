@@ -32,6 +32,12 @@ Chart.js로 만든 정적 대시보드는 [`docs/dora-dashboard.html`](docs/dora
 간단한 학습 패턴을 분석합니다. 학습 기록 관리 페이지에서 기록을 추가한 뒤 분석 페이지를
 새로고침하면 최신 결과를 확인할 수 있습니다.
 
+## CI
+
+`.github/workflows/ci.yml`은 `main`, 기능·수정 브랜치 push와 `main` 대상 Pull Request에서
+Node.js 20 환경으로 자동 실행됩니다. `npm run lint`로 Node.js 및 정적 페이지의 내장
+JavaScript 문법을 확인하고, `npm test`로 동일한 문법 검증 테스트를 실행합니다.
+
 ## GitHub Projects 계획·추적
 
 이슈 생성 시 다음 Issue Form을 사용하면 계획에 필요한 정보와 완료 조건을 일정한 형식으로
