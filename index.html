@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>학습 관리 대시보드</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --primary: #38bdf8; }
+    body { margin: 0; padding: 32px 16px; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    main { max-width: 860px; margin: auto; }
+    h1 { margin: 0; } .subtitle { color: var(--muted); margin: 8px 0 28px; }
+    .links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    a { display: block; padding: 20px; border: 1px solid #334155; border-radius: 14px; color: var(--text); background: var(--card); text-decoration: none; }
+    a:hover { border-color: var(--primary); } strong { display: block; margin-bottom: 8px; color: var(--primary); } span { color: var(--muted); font-size: .9rem; }
+    @media (max-width: 600px) { .links { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>학습 관리 대시보드</h1>
+    <p class="subtitle">학습 기록을 관리하고 성적과 습관을 분석하세요.</p>
+    <nav class="links" aria-label="서비스 메뉴">
+      <a href="docs/study-record.html"><strong>학습 기록 관리</strong><span>학습 주제, 시간, 상태와 메모를 기록합니다.</span></a>
+      <a href="docs/grade-prediction.html"><strong>성적 예측 모델</strong><span>평가 비중과 점수로 예상 성적을 계산합니다.</span></a>
+      <a href="docs/learning-analysis.html"><strong>학습 습관 분석</strong><span>요일별 빈도와 학습 패턴을 확인합니다.</span></a>
+      <a href="docs/dora-dashboard.html"><strong>DORA Metrics</strong><span>배포 성과 지표 대시보드를 확인합니다.</span></a>
+    </nav>
+  </main>
+</body>
+</html>
