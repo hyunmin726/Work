@@ -39,7 +39,14 @@ Ubuntu·Windows·macOS와 Node.js 20·22·24 조합을 매트릭스로 검증합
 `.github/workflows/reusable-node-checks.yml`을 호출하고, 공통 Node.js 설치·의존성 설치·
 Lint/Test 로직은 `.github/actions/node-quality` Composite Action으로 재사용합니다.
 `build → test → deploy` 의존성을 보장하며, 조합별 빌드 아티팩트를 테스트 단계에서
-다운로드하고 모든 테스트가 통과하면 배포용 아티팩트를 업로드합니다.
+다운로드하고 모든 테스트가 통과하면 배포용 아티팩트를 업로드합니다. 추가로 9개 조합에서
+캐시를 비운 설치 시간과 캐시가 채워진 설치 시간을 측정하고, 평균 실행 시간과 개선률을
+Actions Summary에 표로 보고합니다.
+
+배포 단계는 `main` 브랜치에 push된 경우에만 실행되며, Pull Request와 기능·수정 브랜치에서는
+Build/Test만 수행합니다. `dorny/paths-filter`로 `docs/**`, `package.json`,
+`package-lock.json` 변경을 감지하고, 배포 대상 파일이 변경된 경우에만 배포용 아티팩트를
+생성합니다.
 
 ## GitHub Projects 계획·추적
 

@@ -13,18 +13,38 @@ inputs:
     description: Run the test command
     required: false
     default: "false"
+  run-benchmark:
+    description: Measure cold and warm npm install times
+    required: false
+    default: "false"
+  use-cache:
+    description: Enable the npm cache in setup-node
+    required: false
+    default: "true"
+  install:
+    description: Run the regular npm install step
+    required: false
+    default: "true"
 
 runs:
   using: composite
   steps:
-    - name: Set up Node.js
+    - name: Set up Node.js with npm cache
+      if: inputs.use-cache == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
         cache-dependency-path: package-lock.json
 
+    - name: Set up Node.js without npm cache
+      if: inputs.use-cache != 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
     - name: Install dependencies
+      if: inputs.install == 'true'
       shell: bash
       run: npm ci
 
@@ -37,3 +57,8 @@ runs:
       if: inputs.run-test == 'true'
       shell: bash
       run: npm test
+
+    - name: Measure cache performance
+      if: inputs.run-benchmark == 'true'
+      shell: bash
+      run: node scripts/measure-npm-install.js

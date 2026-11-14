@@ -13,8 +13,30 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect deployable changes
+    runs-on: ubuntu-latest
+    outputs:
+      deployable: ${{ steps.filter.outputs.deployable }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            deployable:
+              - 'docs/**'
+              - 'package.json'
+              - 'package-lock.json'
+
   build:
     name: Build (${{ matrix.os }}, Node ${{ matrix.node-version }})
     uses: ./.github/workflows/reusable-node-checks.yml
@@ -45,9 +67,49 @@ jobs:
       artifact-name: test-${{ matrix.os }}-node-${{ matrix.node-version }}
       source-artifact: build-${{ matrix.os }}-node-${{ matrix.node-version }}
 
+  cache-benchmark:
+    name: Cache benchmark (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    needs: test
+    uses: ./.github/workflows/reusable-node-checks.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20, 22, 24]
+    with:
+      runner: ${{ matrix.os }}
+      node-version: ${{ matrix.node-version }}
+      stage: benchmark
+      artifact-name: benchmark-${{ matrix.os }}-node-${{ matrix.node-version }}
+
+  cache-report:
+    name: Report cache improvement
+    needs: cache-benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-*
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Create cache performance report
+        run: node scripts/report-cache-timings.js
+
   deploy:
     name: Package deployable site
-    needs: test
+    needs: [test, cache-report, changes]
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.deployable == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
