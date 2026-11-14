@@ -25,6 +25,13 @@ Chart.js로 만든 정적 대시보드는 [`docs/dora-dashboard.html`](docs/dora
 중앙값을 사용하며, Change Failure Rate는 실패·오류·취소된 배포를 모든 종료 배포로 나눈
 값입니다.
 
+### 학습 기록 관리
+
+[`docs/study-record.html`](docs/study-record.html)을 브라우저에서 열면 학습 주제, 학습일,
+학습 시간, 상태, 태그와 메모를 기록할 수 있습니다. 기록은 브라우저의 `localStorage`에
+저장되며 검색·상태 필터, 수정·삭제와 학습 시간 통계를 제공합니다. 별도 서버 없이
+개인 학습 기록을 관리하는 정적 페이지입니다.
+
 ## GitHub Projects 계획·추적
 
 이슈 생성 시 다음 Issue Form을 사용하면 계획에 필요한 정보와 완료 조건을 일정한 형식으로
