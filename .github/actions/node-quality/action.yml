@@ -1,0 +1,39 @@
+name: Node.js quality checks
+description: Set up Node.js, install locked dependencies, and run selected checks
+
+inputs:
+  node-version:
+    description: Node.js version to install
+    required: true
+  run-lint:
+    description: Run the lint command
+    required: false
+    default: "false"
+  run-test:
+    description: Run the test command
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    - name: Run lint
+      if: inputs.run-lint == 'true'
+      shell: bash
+      run: npm run lint
+
+    - name: Run tests
+      if: inputs.run-test == 'true'
+      shell: bash
+      run: npm test

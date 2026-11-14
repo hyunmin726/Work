@@ -1,0 +1,63 @@
+name: Reusable Node.js checks
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: Runner label used for the matrix entry
+        required: true
+        type: string
+      node-version:
+        description: Node.js version used for the matrix entry
+        required: true
+        type: string
+      stage:
+        description: Pipeline stage to execute
+        required: true
+        type: string
+      artifact-name:
+        description: Artifact produced by this stage
+        required: true
+        type: string
+      source-artifact:
+        description: Artifact downloaded before the test stage
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: ${{ inputs.stage }} (${{ inputs.runner }}, Node ${{ inputs.node-version }})
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        if: inputs.stage == 'test'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.source-artifact }}
+
+      - name: Run Node.js quality checks
+        uses: ./.github/actions/node-quality
+        with:
+          node-version: ${{ inputs.node-version }}
+          run-lint: ${{ inputs.stage == 'build' }}
+          run-test: ${{ inputs.stage == 'test' }}
+
+      - name: Upload build artifact
+        if: inputs.stage == 'build'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: |
+            package.json
+            package-lock.json
+            docs/
+            scripts/
+          if-no-files-found: error
+          retention-days: 7

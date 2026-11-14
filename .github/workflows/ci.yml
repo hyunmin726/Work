@@ -17,92 +17,54 @@ permissions:
 jobs:
   build:
     name: Build (${{ matrix.os }}, Node ${{ matrix.node-version }})
-    runs-on: ${{ matrix.os }}
+    uses: ./.github/workflows/reusable-node-checks.yml
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        node-version: [20, 22]
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint
-        run: npm run lint
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ matrix.os }}-node-${{ matrix.node-version }}
-          path: |
-            package.json
-            package-lock.json
-            docs/
-            scripts/
-          if-no-files-found: error
-          retention-days: 7
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20, 22, 24]
+    with:
+      runner: ${{ matrix.os }}
+      node-version: ${{ matrix.node-version }}
+      stage: build
+      artifact-name: build-${{ matrix.os }}-node-${{ matrix.node-version }}
 
   test:
     name: Test (${{ matrix.os }}, Node ${{ matrix.node-version }})
     needs: build
-    runs-on: ${{ matrix.os }}
+    uses: ./.github/workflows/reusable-node-checks.yml
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        node-version: [20, 22]
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: build-${{ matrix.os }}-node-${{ matrix.node-version }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20, 22, 24]
+    with:
+      runner: ${{ matrix.os }}
+      node-version: ${{ matrix.node-version }}
+      stage: test
+      artifact-name: test-${{ matrix.os }}-node-${{ matrix.node-version }}
+      source-artifact: build-${{ matrix.os }}-node-${{ matrix.node-version }}
 
   deploy:
     name: Package deployable site
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Download tested artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: build-*
           merge-multiple: true
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Run final bundle verification
+        uses: ./.github/actions/node-quality
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify tested bundle
-        run: npm test
+          run-lint: "false"
+          run-test: "true"
 
       - name: Upload deployable artifact
         uses: actions/upload-artifact@v4

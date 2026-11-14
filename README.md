@@ -35,10 +35,11 @@ Chart.js로 만든 정적 대시보드는 [`docs/dora-dashboard.html`](docs/dora
 ## CI
 
 `.github/workflows/ci.yml`은 `main`, 기능·수정 브랜치 push와 `main` 대상 Pull Request에서
-Node.js 20·22와 Ubuntu·Windows 조합을 매트릭스로 검증합니다. `build` 단계가 조합별
-아티팩트를 업로드하고, `test` 단계가 해당 아티팩트를 다운로드해 `npm test`를 실행합니다.
-모든 테스트가 통과하면 `deploy` 단계가 검증된 아티팩트를 다시 모아 배포용 아티팩트로
-업로드합니다. `npm run lint`는 Node.js 및 정적 페이지의 내장 JavaScript 문법을 확인합니다.
+Ubuntu·Windows·macOS와 Node.js 20·22·24 조합을 매트릭스로 검증합니다. `build`와 `test`는
+`.github/workflows/reusable-node-checks.yml`을 호출하고, 공통 Node.js 설치·의존성 설치·
+Lint/Test 로직은 `.github/actions/node-quality` Composite Action으로 재사용합니다.
+`build → test → deploy` 의존성을 보장하며, 조합별 빌드 아티팩트를 테스트 단계에서
+다운로드하고 모든 테스트가 통과하면 배포용 아티팩트를 업로드합니다.
 
 ## GitHub Projects 계획·추적
 
