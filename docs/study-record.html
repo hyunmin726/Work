@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>학습 기록 관리</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-raised: #273449;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --danger: #fb7185;
+      --success: #34d399;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 1100px; margin: auto; }
+    h1 { margin: 0; font-size: 2rem; }
+    h2 { margin: 0 0 16px; font-size: 1.15rem; }
+    .subtitle { margin: 8px 0 28px; color: var(--muted); }
+    .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+    .panel, .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .field { display: grid; gap: 6px; margin-bottom: 14px; }
+    label { color: var(--muted); font-size: .9rem; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      color: var(--text);
+      background: var(--bg);
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+    .actions { display: flex; gap: 8px; margin-top: 20px; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      color: #082f49;
+      background: var(--primary);
+      cursor: pointer;
+    }
+    button.secondary { color: var(--text); background: var(--surface-raised); }
+    button.danger { color: #4c0519; background: var(--danger); }
+    button:hover { filter: brightness(1.08); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat .label { color: var(--muted); font-size: .85rem; }
+    .stat .value { margin-top: 6px; font-size: 1.5rem; font-weight: 700; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 14px; }
+    .toolbar input { flex: 1; }
+    .records { display: grid; gap: 12px; }
+    .record {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-raised);
+    }
+    .record h3 { margin: 0 0 7px; font-size: 1.05rem; }
+    .meta { color: var(--muted); font-size: .9rem; }
+    .notes { margin: 10px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .tag, .status {
+      display: inline-block;
+      margin: 10px 6px 0 0;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: .78rem;
+    }
+    .tag { color: #bae6fd; background: #075985; }
+    .status { color: #bbf7d0; background: #065f46; }
+    .status.in-progress { color: #fde68a; background: #854d0e; }
+    .status.planned { color: #cbd5e1; background: #475569; }
+    .record-actions { display: flex; align-items: start; gap: 6px; }
+    .record-actions button { padding: 7px 10px; font-size: .85rem; }
+    .empty { padding: 28px 12px; text-align: center; color: var(--muted); }
+    .message { min-height: 20px; margin: 10px 0 0; color: var(--success); font-size: .9rem; }
+    @media (max-width: 760px) {
+      body { padding: 24px 12px; }
+      .layout { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    @media (max-width: 520px) {
+      .stats { grid-template-columns: 1fr; }
+      .toolbar, .record { grid-template-columns: 1fr; display: grid; }
+      .record-actions { justify-content: end; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>학습 기록 관리</h1>
+    <p class="subtitle">무엇을, 얼마나, 어디까지 학습했는지 한 곳에서 관리하세요.</p>
+
+    <div class="layout">
+      <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">새 학습 기록</h2>
+        <form id="record-form">
+          <div class="field">
+            <label for="topic">학습 주제 *</label>
+            <input id="topic" name="topic" required maxlength="100" placeholder="예: JavaScript 비동기 처리">
+          </div>
+          <div class="field">
+            <label for="date">학습일 *</label>
+            <input id="date" name="date" type="date" required>
+          </div>
+          <div class="field">
+            <label for="duration">학습 시간 (분) *</label>
+            <input id="duration" name="duration" type="number" min="1" max="1440" required placeholder="예: 60">
+          </div>
+          <div class="field">
+            <label for="status">상태</label>
+            <select id="status" name="status">
+              <option value="completed">완료</option>
+              <option value="in-progress">진행 중</option>
+              <option value="planned">예정</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tags">태그 (쉼표로 구분)</label>
+            <input id="tags" name="tags" maxlength="120" placeholder="예: frontend, 복습">
+          </div>
+          <div class="field">
+            <label for="notes">메모</label>
+            <textarea id="notes" name="notes" maxlength="1000" placeholder="핵심 내용이나 다음 학습 목표"></textarea>
+          </div>
+          <div class="actions">
+            <button type="submit" id="submit-button">기록 저장</button>
+            <button type="button" class="secondary" id="cancel-button" hidden>취소</button>
+          </div>
+          <p class="message" id="message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section aria-labelledby="records-title">
+        <div class="stats" aria-label="학습 통계">
+          <div class="stat"><div class="label">전체 기록</div><div class="value" id="record-count">0개</div></div>
+          <div class="stat"><div class="label">총 학습 시간</div><div class="value" id="total-duration">0시간</div></div>
+          <div class="stat"><div class="label">완료한 기록</div><div class="value" id="completed-count">0개</div></div>
+        </div>
+        <div class="panel">
+          <h2 id="records-title">학습 기록</h2>
+          <div class="toolbar">
+            <input id="search" type="search" placeholder="주제, 태그, 메모 검색" aria-label="학습 기록 검색">
+            <select id="filter" aria-label="상태 필터">
+              <option value="all">전체 상태</option>
+              <option value="completed">완료</option>
+              <option value="in-progress">진행 중</option>
+              <option value="planned">예정</option>
+            </select>
+          </div>
+          <div class="records" id="records"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "study-records";
+    const statusLabels = { completed: "완료", "in-progress": "진행 중", planned: "예정" };
+    const form = document.querySelector("#record-form");
+    const recordsElement = document.querySelector("#records");
+    const messageElement = document.querySelector("#message");
+    const cancelButton = document.querySelector("#cancel-button");
+    let records = loadRecords();
+    let editingId = null;
+
+    document.querySelector("#date").value = new Date().toISOString().slice(0, 10);
+    form.addEventListener("submit", saveRecord);
+    cancelButton.addEventListener("click", resetForm);
+    document.querySelector("#search").addEventListener("input", render);
+    document.querySelector("#filter").addEventListener("change", render);
+    render();
+
+    function loadRecords() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        messageElement.textContent = "저장된 기록을 불러오지 못했습니다.";
+        return [];
+      }
+    }
+
+    function saveRecord(event) {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const record = {
+        id: editingId || createId(),
+        topic: formData.get("topic").trim(),
+        date: formData.get("date"),
+        duration: Number(formData.get("duration")),
+        status: formData.get("status"),
+        tags: formData.get("tags").split(",").map((tag) => tag.trim()).filter(Boolean),
+        notes: formData.get("notes").trim()
+      };
+      if (!record.topic || !record.date || !Number.isInteger(record.duration) || record.duration < 1) return;
+
+      if (editingId) {
+        records = records.map((item) => item.id === editingId ? record : item);
+        showMessage("학습 기록을 수정했습니다.");
+      } else {
+        records.push(record);
+        showMessage("학습 기록을 저장했습니다.");
+      }
+      persist();
+      resetForm(false);
+      render();
+    }
+
+    function render() {
+      const query = document.querySelector("#search").value.trim().toLowerCase();
+      const filter = document.querySelector("#filter").value;
+      const visibleRecords = records
+        .filter((record) => filter === "all" || record.status === filter)
+        .filter((record) => [record.topic, record.notes, record.tags.join(" ")].join(" ").toLowerCase().includes(query))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      recordsElement.replaceChildren();
+      if (!visibleRecords.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = records.length ? "검색 조건에 맞는 기록이 없습니다." : "아직 학습 기록이 없습니다.";
+        recordsElement.append(empty);
+      } else {
+        visibleRecords.forEach((record) => recordsElement.append(createRecordElement(record)));
+      }
+      document.querySelector("#record-count").textContent = `${records.length}개`;
+      document.querySelector("#total-duration").textContent = formatDuration(records.reduce((sum, record) => sum + record.duration, 0));
+      document.querySelector("#completed-count").textContent = `${records.filter((record) => record.status === "completed").length}개`;
+    }
+
+    function createRecordElement(record) {
+      const article = document.createElement("article");
+      article.className = "record";
+      const content = document.createElement("div");
+      const title = document.createElement("h3");
+      title.textContent = record.topic;
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${record.date} · ${formatDuration(record.duration)}`;
+      const status = document.createElement("span");
+      status.className = `status ${record.status}`;
+      status.textContent = statusLabels[record.status];
+      content.append(title, meta, status);
+      record.tags.forEach((tag) => {
+        const tagElement = document.createElement("span");
+        tagElement.className = "tag";
+        tagElement.textContent = `#${tag}`;
+        content.append(tagElement);
+      });
+      if (record.notes) {
+        const notes = document.createElement("p");
+        notes.className = "notes";
+        notes.textContent = record.notes;
+        content.append(notes);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "record-actions";
+      const editButton = document.createElement("button");
+      editButton.className = "secondary";
+      editButton.textContent = "수정";
+      editButton.addEventListener("click", () => startEditing(record));
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "danger";
+      deleteButton.textContent = "삭제";
+      deleteButton.addEventListener("click", () => deleteRecord(record.id));
+      actions.append(editButton, deleteButton);
+      article.append(content, actions);
+      return article;
+    }
+
+    function startEditing(record) {
+      editingId = record.id;
+      Object.entries(record).forEach(([key, value]) => {
+        const field = form.elements[key];
+        if (field) field.value = Array.isArray(value) ? value.join(", ") : value;
+      });
+      document.querySelector("#form-title").textContent = "학습 기록 수정";
+      document.querySelector("#submit-button").textContent = "수정 저장";
+      cancelButton.hidden = false;
+      document.querySelector("#topic").focus();
+    }
+
+    function deleteRecord(id) {
+      if (!window.confirm("이 학습 기록을 삭제할까요?")) return;
+      records = records.filter((record) => record.id !== id);
+      persist();
+      showMessage("학습 기록을 삭제했습니다.");
+      render();
+    }
+
+    function resetForm(clearMessage = true) {
+      editingId = null;
+      form.reset();
+      document.querySelector("#date").value = new Date().toISOString().slice(0, 10);
+      document.querySelector("#form-title").textContent = "새 학습 기록";
+      document.querySelector("#submit-button").textContent = "기록 저장";
+      cancelButton.hidden = true;
+      if (clearMessage) messageElement.textContent = "";
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function createId() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function formatDuration(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return hours ? `${hours}시간 ${remainingMinutes}분` : `${remainingMinutes}분`;
+    }
+
+    function showMessage(message) {
+      messageElement.textContent = message;
+    }
+  </script>
+</body>
+</html>
